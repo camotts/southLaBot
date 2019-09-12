@@ -27,7 +27,16 @@ func main() {
 	errCheck("error retrieving account", err)
 
 	botID = user.ID
-	discord.AddHandler(parseCommand)
+
+	rp := RoleParser{}
+
+	parser := NewParserChain().AddParser(func(discord *discordgo.Session, message *discordgo.MessageCreate) (bool, error) {
+		return IsBot(message.Author), nil
+	}).AddParser(rp.ListRole, rp.AddRole, rp.RemoveRole, rp.ConfigureRole, rp.DeleteRole)
+
+	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
+		parser.Parse(discord, message)
+	})
 
 	err = discord.Open()
 	errCheck("Error opening connection to Discord", err)
